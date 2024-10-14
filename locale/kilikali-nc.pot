@@ -1,0 +1,98 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-11-06 14:40+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ncurses-screen.c:345
+msgid "Copy failed."
+msgstr ""
+
+#: src/ncurses-screen.c:352
+msgid "Cut failed."
+msgstr ""
+
+#: src/ncurses-screen.c:530
+msgid "Paste after failed."
+msgstr ""
+
+#: src/ncurses-screen.c:537
+msgid "Paste before failed."
+msgstr ""
+
+#: src/ncurses-screen.c:1105
+msgid "No such command."
+msgstr ""
+
+#: src/ncurses-screen.c:1107
+msgid "Command failed. Possibly invalid arguments."
+msgstr ""
+
+#: src/ncurses-window-filebrowser.c:102
+msgid "Filebrowser"
+msgstr ""
+
+#: src/ncurses-window-mode.c:55
+msgid "loop"
+msgstr ""
+
+#: src/ncurses-window-mode.c:62
+#, c-format
+msgid "Volume: %3d"
+msgstr ""
+
+#: src/ncurses-window-playlist.c:426
+#, c-format
+msgid "Total: %d"
+msgstr ""
+
+#: src/playlist-line.c:28 src/playlist-line.c:51
+msgid "Unknown title"
+msgstr ""
+
+#: src/playlist-line.c:53
+msgid "Unknown artist"
+msgstr ""
+
+#: src/playlist-line.c:55
+msgid "Unknown album"
+msgstr ""
+
+#: src/playlist.c:132
+msgid "Suffle"
+msgstr ""
+
+#: src/playlist.c:133
+msgid "Random"
+msgstr ""
+
+#: src/playlist.c:134
+msgid "Error"
+msgstr ""
+
+#: src/gst/inspector.c:102
+#, c-format
+msgid "%d items added to the playlist."
+msgstr ""
+
+#: src/gst/inspector.c:103
+msgid "One item added to the playlist."
+msgstr ""
+
+#: src/gst/inspector.c:288
+#, c-format
+msgid "%c Scannning dir: %s"
+msgstr ""

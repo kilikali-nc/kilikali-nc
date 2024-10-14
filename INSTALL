@@ -1,0 +1,45 @@
+--------
+INSTALL
+--------
+
+Project contains Makefile for building.
+
+Check README for build dependencies.
+
+---------------------
+Environment variables
+---------------------
+
+Variable    Default value
+-----------------------------------
+PREFIX    | /usr/local
+BUILD_DIR | current dir
+LOCALEDIR | $(PREFIX)/share/locale
+BINDIR    | $(PREFIX)/bin
+CC        | cc
+
+--------
+Examples
+--------
+
+* Build and install with default paths
+
+$ make distclean all
+$ sudo make install 
+
+* Build in build directory using deefault paths
+
+$ mkdir build
+$ cd build
+$ make -f ../Makefile distclean all
+$ sudo make -f ../Makefile install
+
+* Build in build directory using default paths
+
+$ BUILD_DIR=build make distclean all
+$ BUILD_DIR=build sudo make install 
+
+* Build in build directory using /urs as prefix
+
+$ BUILD_DIR=build PREFIX=/usr/ make distclean all
+$ BUILD_DIR=build PREFIX=/usr/ sudo make install

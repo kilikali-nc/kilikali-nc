@@ -1,0 +1,98 @@
+# Finnish translations for PACKAGE package.
+# Copyright (C) 2022 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <jvaltane@kapsi.fi>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-11-06 14:40+0200\n"
+"PO-Revision-Date: 2022-10-31 23:49+0200\n"
+"Last-Translator:  <jvaltane@kapsi.fi>\n"
+"Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/ncurses-screen.c:345
+msgid "Copy failed."
+msgstr "Kopiointi epäonnistui."
+
+#: src/ncurses-screen.c:352
+msgid "Cut failed."
+msgstr "Leikkaaminen epäonnistui."
+
+#: src/ncurses-screen.c:530
+msgid "Paste after failed."
+msgstr "Liittäminen jälkeen epäonnistui."
+
+#: src/ncurses-screen.c:537
+msgid "Paste before failed."
+msgstr "Liittäminen ennen epäonnistui."
+
+#: src/ncurses-screen.c:1105
+msgid "No such command."
+msgstr "Komentoa ei löydy."
+
+#: src/ncurses-screen.c:1107
+msgid "Command failed. Possibly invalid arguments."
+msgstr "Komento epäonnistui. Mahdollisesti virheeliset argumentit."
+
+#: src/ncurses-window-filebrowser.c:102
+msgid "Filebrowser"
+msgstr "Tiedostoselain"
+
+#: src/ncurses-window-mode.c:55
+msgid "loop"
+msgstr "jatkuva toisto"
+
+#: src/ncurses-window-mode.c:62
+#, c-format
+msgid "Volume: %3d"
+msgstr "Äänenvoimakkuus: %3d"
+
+#: src/ncurses-window-playlist.c:426
+#, c-format
+msgid "Total: %d"
+msgstr "Yhteensä: %d"
+
+#: src/playlist-line.c:28 src/playlist-line.c:51
+msgid "Unknown title"
+msgstr "Tuntematon kappale"
+
+#: src/playlist-line.c:53
+msgid "Unknown artist"
+msgstr "Tuntematon artisti"
+
+#: src/playlist-line.c:55
+msgid "Unknown album"
+msgstr "Tuntematon albumi"
+
+#: src/playlist.c:132
+msgid "Suffle"
+msgstr "Sekoitus"
+
+#: src/playlist.c:133
+msgid "Random"
+msgstr "Satunnainen"
+
+#: src/playlist.c:134
+msgid "Error"
+msgstr "Virhe"
+
+#: src/gst/inspector.c:102
+#, c-format
+msgid "%d items added to the playlist."
+msgstr "%d kohdetta lisätty soittolistaan."
+
+#: src/gst/inspector.c:103
+msgid "One item added to the playlist."
+msgstr "Yksi kohde lisätty soittolistaan."
+
+#: src/gst/inspector.c:288
+#, c-format
+msgid "%c Scannning dir: %s"
+msgstr "%c Käydään läpi hakemistoa: %s"

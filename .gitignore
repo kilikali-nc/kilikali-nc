@@ -1,0 +1,5 @@
+*.o
+*~
+*.swp
+kk-ncurses
+src/help.h

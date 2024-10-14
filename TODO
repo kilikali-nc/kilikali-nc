@@ -1,0 +1,42 @@
+----
+TODO
+----
+
+Before release
+--------------
+
+- code: add common global string buffers like tmp_str:s instead of _tmp.
+- code: investigate is it possible to get rid off g_timeout_add() calls
+- code: check tabs/spaces
+- config: at least print some error, if invalid lines in config while parsing.
+  now just quits with error 3.
+- errors: check is there enought checks + messages
+- filebrowser: fix bug where sometimes "file added" userinfo isn't printed for
+  single files
+- filebrowser: search - search lost at update (u) and dir change.
+- filebrowser: enter adds item to playlist and starts playing it
+- filebrowser: Update filebrowser list if changed when going into filebrowser
+  mode
+- filebrowser: search - use new search with regex
+  + probably not needed anymore: fix use of non-UTF8 isupper() in filebrowser
+- keybindings: check default values
+- man page: check content
+- playlist: fix search next (n-key) (atm moves to some non-matching items)
+  + check if still happens
+- search: does noh really reset search? In vim it set highlightmode off until
+  next search
+- search/cmdline: optional history file
+- search/cmdline history: sometimes (null) appears appears to end of line
+- translations: needs string check and proper translations
+- translations: check that works properly
+
+Future
+------
+
+- code: character encoding, iconv to encode printable strings + config (idea probably
+  is to use same encoding than terminal)
+- command: replace - clear playlist + add path/file/playlist
+- command: set - to configuration modification. + way to save configuration
+- mouse: add seek, possibly volume and selections
+- playlist: some easy way to change between multiple playlists (like vim buffers?)
+- search/cmdline: fix remaining bugs from tabulator completition

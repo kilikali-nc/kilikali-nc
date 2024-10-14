@@ -1,0 +1,208 @@
+NAME
+  kilikali-nc - NCurses based audio player
+SYNOPSIS
+  kilikali-nc [-hkd] [-g new_conf] [-c old_conf] [-l log_file]
+              [file] [directory] [url] [playlist] ...
+DESCRIPTION
+  kilikali-nc is an NCurses based audio player. It supports a variety of
+  file formats. kilikali-nc also reads PLS (read and write) and M3U (read only)
+  playlists.
+
+  The kilikali-nc UI has taken infuences from Vim and the way graphical file
+  managers handle files. In modal style of Vim, the application has several
+  main modes: Playlist, Edit, Command, Search and Filebrowser.
+
+  Commands' left over parameters are handled as file(s), directorie(s), url(s)
+  and playlist(s) which are tried to add to the end of the default playlist.
+
+OPTIONS
+  -h             Print help.
+  -g [new_conf]  Generate default configuration file. Overrides an existing file of the same name.
+  -c [old_conf]  Set external configuration file. Use this file to read config.
+  -l [log_file]  Set logfile path. Logs to this file.
+  -k             User can check input combinations to configure keys. Escape to exit.
+  -d             Log debug information.
+
+CONFIG
+  By default kilikali-nc looks for a configuration file under the path
+  ~/.config/kilikali-nc/default.cfg. A different configuration file may be
+  used with the -c option. A new configuration file with all the default
+  options can be generated using the -g option.
+
+  Most Playlist and Edit mode keys can be changed using config file.
+
+  See default or a newly generated config file for syntax and examples.
+
+  Special keycodes
+    ^@    CTRL-@    0
+    ^c    CTRL-c    3     break
+    ^h    CTRL-h    8     backspace
+    ^i    CTRL-i    9     tab
+    ^j    CTRL-j    10    enter / return
+    ^[    CTRL-[    27    escape
+    ^l    CTRL-l    12    formfeed
+    ^m    CTRL-m    13    carriage-return
+
+MODES
+  General information
+    There are several modes: Playlist, Edit, Command, Seach, Filebrowser, Help,
+    and Lyrics. Playlist mode is the main mode.
+
+  Global keys
+    CTRL+k         Volume up
+    CTRL+l         Volume down
+    CTRL+c / ESC   Abort / back to playlist view
+
+  Playlist mode
+    The main mode. Control songs or streams. Able to play, pause, remove or switch
+    between songs and modes.
+
+    q                       Quit application.
+    ENTER / CTRL+j          Change to selected song and play it.
+    CTRL+f / PAGE DOWN      Move down by a full page.
+    CTRL+b / PAGE UP        Move up by a full page.
+    CTRL+d                  Move down by a half page.
+    CTRL+u                  Move up by a half page.
+    CTRL+e                  Move page down by one item.
+    CTRL+y                  Move page up by one item.
+    j / DOWN                Move selection down by one item.
+    k / UP                  Move selection up by one item.
+    zz                      Center page to current selection.
+    SHIFT+v                 Toggle multi selection mode.
+    CTRL+a                  Select all playlist items.
+    LEFT                    Seek one second forward.
+    RIGHT                   Seek one second backward.
+    DEL                     Remove selected songs.
+    :                       Change to Command mode.
+    /                       Change to Search mode.
+    e                       Change to Edit mode.
+    a                       Change to Filebrowser mode.
+    h                       Change to Help mode.
+    SHIFT+l                 Change to Lyrics mode, if enabled. See config for more details.
+    m                       Change playlists play mode between Standard, Shuffle and Random.
+    l                       Toggle loop. Looping is always on in random mode.
+    n                       Jump to next search match.
+    y                       Copy highlighted playlist lines.
+    x                       Cut highlighted playlist lines.
+    p                       Paste after highlighted line.
+    SHIFT+p                 Paste before highlighted line.
+    >                       Change to next tune. For example C64 SIDs have multiple tunes.
+    <                       Change to previous tune.
+
+  Edit mode
+    With edit mode it is possible to remove or move selected playlist lines.
+
+    ESC / CTRL+c            Move back to playlist mode.
+    CTRL+f / PAGE DOWN      Move down by a full page.
+    CTRL+b / PAGE UP        Move up by a full page.
+    CTRL+d                  Move down by a half page.
+    CTRL+u                  Move up by a half page.
+    CTRL+e                  Move page down by one item.
+    CTRL+y                  Move page up by one item.
+    j / DOWN                Move selection down by one item.
+    k / UP                  Move selection up by one item.
+    zz                      Center page to current selection.
+    SHIFT+v                 Toggle multi selection mode
+    ENTER / CTRL+j          Toggle selection of highlighted lines.
+    DEL                     Remove selected playlist lines
+    y                       Copy selected playlist lines.
+    x                       Cut selected playlist lines.
+    p                       Paste after highlighted line.
+    SHIFT+p                 Paste before highlighted line.
+
+  Command mode
+    Add or remove files or streams. List contain commands and special keys
+
+    ESC / CTRL+c            Discard command and move back to playlist mode.
+    ENTER / CTRL+j          Execute command and move back to playlist mode.
+    UP / DOWN               Find commands from history.
+    TAB / CTRL+n            Tries to complete user input. Includes commands and commands with paths.
+    SHIFT+TAB / CTRL+p      Tries to complete user input. Reverse order.
+    CTRL+a / HOME           Move cursor to start of the line.
+    CTRL+e / END            Move cursor to end of the line.
+    CTRL+LEFT / CTRL+RIGHT  Move cursor to previous or next word.
+
+  Search mode
+    Search items from playlist. Case sensitive if any uppercase characters given. To find next,
+    use playlist modes search next. Posix regular expression compatible.
+
+    ESC / CTRL+c  Discard search and move back to playlist mode.
+    ENTER         Execute search and move back to playlist mode.
+    UP / DOWN     Find searches from history.
+
+  Filebrowser mode
+    In filebrowser mode it is possible browse the filesystem and add songs to the playlist.
+
+    CTRL+f / PAGE DOWN   Move down by a full page.
+    CTRL+b / PAGE UP     Move up by a full page.
+    CTRL+d               Move down by a half page.
+    CTRL+u               Move up by a half page.
+    CTRL+e               Move page down by one item.
+    CTRL+y               Move page up by one item.
+    j / DOWN             Move selection down by one item.
+    k / UP               Move selection up by one item.
+    zz                   Center page to current selection.
+    Space                Add selected file to playlist.
+    Enter                Go to selected directory.
+    q / ESC / CTRL+c     Change to Playlist mode.
+    :                    Change to Command mode.
+    /                    Change to Search mode.
+    s                    Change sort mode. Available modes: alphabetical.
+    u                    Refresh.
+
+  Help and lyrics modes
+    These are text viewers
+
+    CTRL+f               Move down by a full page.
+    CTRL+b               Move up by a full page.
+    CTRL+d               Move down by a half page.
+    CTRL+u               Move up by a half page.
+    j / DOWN             Move selection down by one item.
+    k / UP               Move selection up by one item.
+    ESC / CTRL+c         Change to Playlist mode.
+
+COMMANDS
+  Common
+    help            Show help.
+    volume <0-100>  Sets volume.
+  Playlist mode
+    add <url/directory/file/playlist> ...                        Adds url, playlist, file or recursively directory to playlist. Multiple items can be added.
+    cd <directory>                                               Channge working directory.
+    cd                                                           Channge to default music directory.
+    pwd                                                          Print working directory.
+    quit                                                         Quit application
+    remove <song number> or <start of range>-<end of range> ...  Remove song or range of songs. There can be multiple songs or ranges separated by space.
+    write [playlist]                                             Writes playlist to given path in pls format. If name not given, kilikali-nc writes playlist as default playlist.
+    search <string>                                              Search from playlist. Case sensitive if upper case characters is given. Use playlist normal 
+    metasearch <string>                                          Search from metadata of playlist items. Case sensitive if upper case characters is given. Use playlist normal s
+    seek <hour:min:sec> or <min:sec> or <sec> or <percentage%>   Seek to a position in the current song
+  Filebrowser mode
+    cd <directory>  Change filebrowser working directory
+    cd              Change to filebrowser default music directory.
+    pwd             Print filebrowser working directory.
+    q               Change to playlist mode.
+
+EXAMPLES
+  Command line
+    $ kilikali-nc /home/user/Music            Adds /home/user/Music directory to end of current playlist
+    $ kilikali-nc /home/user/my_playlist.pls  Adds my_playlist.pls to end of the playlist.
+
+  Adding files in playlist command mode
+    :add /home/user/Music            Adds /home/user/Music directory to end of current playlist
+    :add /home/user/my_playlist.pls  Adds my_playlist.pls to end of the playlist.
+
+  Removing in playlists command mode
+    :remove 10      Remove song number ten.
+    :remove 2-5     Remove songs from numbers two to five.
+    :remove 2-5 10  Remove songs from numbers two to five and ten.
+
+COPYRIGHT
+  Copyright (c) 2024 kilikali-nc team.
+
+  License GPLv2: GNU GPL version 2 or later <https://gnu.org/licenses/gpl.html>.
+
+REPORTING BUGS
+  TODO
+
+
+
