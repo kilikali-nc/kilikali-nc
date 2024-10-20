@@ -53,20 +53,15 @@ static const char *help_str =
     "-g [FILE_PATH]: Generate an example configuration file.\n"
     "-l [FILE_PATH]: Set log file path.\n"
     "-d:             Log debugging information.\n"
-    "-k:             Print key values for config keybindings";
+    "-k:             Print key values for configuring keybindings.";
 
 static gboolean _add_idle (gpointer data);
 
 static void quit (int signum)
 {
-    if (config.playlist_save_at_exit == TRUE) {
-        gchar *pl = paths_saved_data_default_playlist ();
-        if (pl != NULL) {
-            playlist_pls_save (playlist_get (), pl);
-            g_free (pl);
-        }
+    if (loop != NULL) {
+        g_main_loop_quit (loop);
     }
-    if (loop != NULL) g_main_loop_quit (loop);
 }
 
 int main (int argc, char **argv)
@@ -126,7 +121,9 @@ int main (int argc, char **argv)
 
     while (optind < argc) {
         char *a = realpath (argv[optind], add_str);
-        if (a == NULL) a = argv[optind];
+        if (a == NULL) {
+            a = argv[optind];
+        }
         to_add = g_slist_prepend (to_add, g_strdup (a));
         optind++;
     }
@@ -143,9 +140,6 @@ int main (int argc, char **argv)
     setlocale (LC_ALL, "");
     /* use dot with floar double with strtod, sscanf etc. and nott comma for example */
     setlocale (LC_NUMERIC, "C");
-/*
-    fprintf (stderr, "                                           package:'%s' localedir:'%s'", PACKAGE, LOCALEDIR);
-*/
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
 
@@ -226,6 +220,13 @@ int main (int argc, char **argv)
         g_timeout_add (100, _add_idle, to_add);
     }
     g_main_loop_run (loop);
+    if (config.playlist_save_at_exit == TRUE) {
+        gchar *pl = paths_saved_data_default_playlist ();
+        if (pl != NULL) {
+            playlist_pls_save (playlist_get (), pl);
+            g_free (pl);
+        }
+    }
 
 error:
     if (to_add != NULL) {
@@ -234,8 +235,12 @@ error:
         }
         g_slist_free (to_add);
     }
-    if (config_file_path != NULL) g_free (config_file_path);
-    if (loop != NULL) g_main_loop_unref (loop);
+    if (config_file_path != NULL) {
+        g_free (config_file_path);
+    }
+    if (loop != NULL) {
+        g_main_loop_unref (loop);
+    }
     ncurses_screen_free ();
     playlist_free ();
     config_destroy ();
@@ -248,7 +253,9 @@ error:
 
 static gboolean _add_idle (gpointer data)
 {
-    if (data == NULL) return FALSE;
+    if (data == NULL) {
+        return FALSE;
+    }
 
     GSList *to_add = (GSList *)data;
     /* reverse order */
