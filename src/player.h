@@ -36,6 +36,7 @@ typedef enum {
 typedef enum {
     PLAYER_MESSAGE_UNKNOWN,
     PLAYER_MESSAGE_ERROR,
+    PLAYER_MESSAGE_ABOUT_TO_FINISH,
     PLAYER_MESSAGE_EOS,
     PLAYER_MESSAGE_TAG
 } PlayerMessage;

@@ -45,7 +45,7 @@ static GList *_try_add_file (const gchar *filepath);
 static GList *_add_uri (const gchar *uri);
 static void _on_new_pad (GstElement *src_element, GstPad *pad, GstElement *sink_element);
 static void _on_element_added (GstBin *p0, GstBin *p1, GstElement *e, gpointer data);
-static void _check_is_sid (const GstCaps *caps, Song *s);
+static void _check_is_special_format (const GstCaps *caps, Song *s);
 
 
 #if defined(DEBUG_GST_INSPECTOR)
@@ -183,7 +183,7 @@ no_check_error:
     return NULL;
 }
 
-static void _check_is_sid (const GstCaps *caps, Song *s)
+static void _check_is_special_format (const GstCaps *caps, Song *s)
 {
     if (caps == NULL) return;
     else if (s == NULL) return;
@@ -195,8 +195,12 @@ static void _check_is_sid (const GstCaps *caps, Song *s)
     const gchar *name = gst_structure_get_name (gs);
     if (name == NULL) return;
 //    g_critical ("%s", name);
-    if (strncmp (name, "audio/x-sid", 12) == 0 || strncmp (name, "audio/x-rsid", 12) == 0) {
+    if (strncmp (name, "audio/x-sid", 12) == 0 || strncmp (name, "audio/x-rsid", 13) == 0) {
         song_set_type (s, SONG_TYPE_SID);
+    } else if (strncmp (name, "audio/x-mod", 12) == 0 || strncmp (name, "audio/x-xm", 11) == 0 ||
+        strncmp (name, "audio/x-it", 11) == 0 || strncmp (name, "audio/x-s3m", 12) == 0 ||
+        strncmp (name, "audio/x-stm", 12) == 0) {
+        song_set_type (s, SONG_TYPE_MOD);
     }
 }
 
@@ -235,7 +239,7 @@ gboolean inspector_try_uri (gchar *uri, Song *s)
         if (e != NULL) {
             GstCaps *caps = NULL;
             g_object_get (e, "caps", &caps, NULL);
-            _check_is_sid (caps, s);
+            _check_is_special_format (caps, s);
             if (s->type == SONG_TYPE_SID) {
                 guint tunes = 0;
                 if (_is_siddecfp == TRUE && _siddec != NULL) {

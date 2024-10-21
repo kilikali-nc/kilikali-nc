@@ -84,9 +84,9 @@ static void _del_wins (void);
 static gboolean _resize_screen (void);
 static gboolean _resize_screen_idle (gpointer data);
 
-static void _change_song_to_index (gint to_index);
+static void _change_song_to_index (gint to_index, gboolean call_player_stop);
 static void _play (void);
-static void _stop (void);
+static void _stop (gboolean call_player_stop);
 
 static void _event_mouse (MEVENT *m);
 static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_repeats,
@@ -390,7 +390,7 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
             g_slist_free (remove_list);
             ncurses_window_playlist_toggle_select_set (FALSE);
         } else if (_check_key (&config.key_playlist_select, keybind_name)) {
-            _change_song_to_index (selection_end_index);
+            _change_song_to_index (selection_end_index, TRUE);
         } else if (_check_key (&config.key_command_mode, keybind_name)) {
             _mode = NCURSES_SCREEN_MODE_CMD;
             cmdline_mode_set (CMDLINE_MODE_CMD);
@@ -806,6 +806,11 @@ void _player_status_update_func (PlayerMessage m, gpointer data)
             g_idle_add (_next_song_idle, NULL);
             break;
         }
+        case PLAYER_MESSAGE_ABOUT_TO_FINISH: {
+            static gboolean call_player_stop = FALSE;
+            g_idle_add (_next_song_idle, &call_player_stop);
+            break;
+        }
         case PLAYER_MESSAGE_TAG: {
             Song *s = (Song *)data; 
             song_tags_copy (_current_song, s);
@@ -850,7 +855,7 @@ static void _screen_update_cmd (void)
     ncurses_window_command_prompt_update(mode, _cmdline, _cursor_pos);
 }
 
-static void _change_song_to_index (gint to_index)
+static void _change_song_to_index (gint to_index, gboolean call_player_stop)
 {
     Song *o;
     gint last_index = playlist_length () - 1;
@@ -859,22 +864,22 @@ static void _change_song_to_index (gint to_index)
 
     o = playlist_get_nth_song (to_index);
     if (o == NULL) {
-       _current_index = -1;
-        ncurses_window_playlist_unselect_all();
-       return;
+        _current_index = -1;
+        ncurses_window_playlist_unselect_all ();
+        return;
     }
-    _stop ();
+    _stop (call_player_stop);
     _play ();
     _current_index = to_index;
 }
 
-static void _stop (void)
+static void _stop (gboolean call_player_stop)
 {
     if (_update_time_id > 0) {
         g_source_remove (_update_time_id);
         _update_time_id = 0;
     }
-    player_stop ();
+    if (call_player_stop == TRUE) player_stop ();
     _current_song = NULL;
     _current_index = -1;
 }
@@ -908,14 +913,18 @@ static gboolean _update_time_idle (gpointer data)
 }
 
 static gboolean _next_song_idle (gpointer data)
-{ 
-    _stop ();
+{
     gint len = playlist_length ();
     Song *o = playlist_get_next_song ();
-    _sid_tune_index = 0;
     gint next_index = playlist_get_song_index (o);
+    gboolean call_player_stop = TRUE;
+    _sid_tune_index = 0;
+    if (data != NULL) {
+        call_player_stop = *((gboolean *)data);
+    }
+    _stop (call_player_stop);
     if (next_index < len && next_index >= 0) {
-        _change_song_to_index (next_index);
+        _change_song_to_index (next_index, call_player_stop);
     }
     g_idle_add (_screen_update_idle, NULL);
     return FALSE;
@@ -923,7 +932,7 @@ static gboolean _next_song_idle (gpointer data)
 
 static gboolean _change_tune_idle (gpointer data)
 { 
-    _stop ();
+    _stop (TRUE);
     _sid_tune_index = player_set_sid_tune (_sid_tune_index);
     _play ();
     g_idle_add (_screen_update_idle, NULL);
@@ -961,7 +970,7 @@ static void _remove_songs (GSList *remove_list, Song *original)
 
     if (current != original) {
         state = player_state ();
-        _stop ();
+        _stop (TRUE);
         if (state == PLAYER_STATE_PLAYING) _play ();
     }
     _current_index = playlist_get_song_index (current);

@@ -29,7 +29,8 @@ typedef enum
     SONG_TYPE_UNKNOWN,
     SONG_TYPE_FILE,
     SONG_TYPE_STREAM,
-    SONG_TYPE_SID
+    SONG_TYPE_SID,
+    SONG_TYPE_MOD
 } SongType;
 
 typedef struct

@@ -29,7 +29,9 @@
 
 static PlayerState _state_change (GstState state);
 static void _on_element_added (GstBin *p0, GstBin *p1, GstElement *e, gpointer data);
+static void _on_element_setup (GstElement *e, GstElement *e1, gpointer data);
 static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data);
+static void _on_about_to_finish (GstElement *e, gpointer data);
 
 static GstElement *_playbin = NULL;
 static GstElement *_output = NULL;
@@ -57,10 +59,18 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
     _status_update_func = status_update_func;
     if (_status_update_func == NULL) goto error;
 
-    _playbin = gst_element_factory_make ("playbin", "playbin");
+    _playbin = gst_element_factory_make ("playbin3", "playbin");
     if (_playbin == NULL) {
-        goto error;
+        _playbin = gst_element_factory_make ("playbin", "playbin");
+        if (_playbin == NULL) {
+            goto error;
+        }
+    } else {
+        g_object_set (_playbin, "instant-uri", TRUE, NULL);
+        g_signal_connect (GST_BIN (_playbin), "element-setup", G_CALLBACK (_on_element_setup), NULL);
     }
+    g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
+
     if (strncmp (config.output, "alsa", 4) == 0) {
         _output = gst_element_factory_make ("alsasink", "alsasink");
         if (_output != NULL) {
@@ -83,7 +93,6 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
     _bus = gst_element_get_bus (_playbin);
     gst_bus_add_watch (_bus, _message_handler, NULL);
 
-    g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
     _volume = player_volume ();
     return TRUE;
 error:
@@ -107,9 +116,11 @@ gint player_set_song (Song *s)
     if (s->uri == NULL) return 2;
     if (_playbin == NULL) return 3; 
 
+    g_signal_handlers_disconnect_by_func (_playbin, G_CALLBACK (_on_about_to_finish), NULL);
+    if (s->type != SONG_TYPE_SID && s->type != SONG_TYPE_MOD) {
+        g_signal_connect (GST_BIN (_playbin), "about-to-finish", G_CALLBACK (_on_about_to_finish), NULL);
+    }
     _song = s;
-    (void)player_stop ();
-
     g_object_set (_playbin, "uri", _song->uri, NULL);
 
     return 0;
@@ -143,6 +154,7 @@ gboolean player_seek (gint64 ms)
     gint64 ns = 0;
     gint64 len = 0;
     if (player_state () != PLAYER_STATE_PLAYING) return FALSE;
+    else if (_song != NULL && (_song->type == SONG_TYPE_SID || _song->type == SONG_TYPE_MOD)) return FALSE;
     else if (gst_element_query_position (_playbin, GST_FORMAT_TIME, &ns) == FALSE) return FALSE;
     else if (gst_element_query_duration (_playbin, GST_FORMAT_TIME, &len) == FALSE) return FALSE;
 
@@ -153,8 +165,12 @@ gboolean player_seek (gint64 ms)
     return gst_element_seek_simple (_playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT, ns);
 }
 
-gboolean player_seek_to (gint64 ms) {
+gboolean player_seek_to (gint64 ms)
+{
     gint64 ns = ms * 1000000;
+    if (player_state () != PLAYER_STATE_PLAYING) return FALSE;
+    else if (_song != NULL && (_song->type == SONG_TYPE_SID || _song->type == SONG_TYPE_MOD)) return FALSE;
+
     return gst_element_seek_simple (_playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_KEY_UNIT, ns);
 }
 
@@ -211,6 +227,7 @@ static PlayerState _state_change (GstState state)
 {
     gint ret;
     if (_playbin == NULL) return PLAYER_STATE_ERROR;
+
     ret = gst_element_set_state (_playbin, state);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         _state = PLAYER_STATE_ERROR;
@@ -322,3 +339,16 @@ static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data)
     return TRUE;
 }
 
+static void _on_element_setup (GstElement *e, GstElement *e1, gpointer data)
+{
+    _on_element_added (NULL, NULL, e, data);
+}
+
+static void _on_about_to_finish (GstElement *e, gpointer data)
+{
+    Song o;
+    if (_siddec == NULL && _status_update_func != NULL) {
+        memset (&o, 0, sizeof (Song));
+        _status_update_func (PLAYER_MESSAGE_ABOUT_TO_FINISH, (gpointer)&o);
+    }
+}
