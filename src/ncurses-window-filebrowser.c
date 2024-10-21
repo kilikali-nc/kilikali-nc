@@ -25,6 +25,7 @@
 #include <libintl.h>
 #include <inttypes.h>
 #include <sys/stat.h>
+#include <errno.h>
 #define _(String) gettext (String)
 
 #include "ncurses-window-filebrowser.h"
