@@ -40,3 +40,4 @@ Future
 - mouse: add seek, possibly volume and selections
 - playlist: some easy way to change between multiple playlists (like vim buffers?)
 - search/cmdline: fix remaining bugs from tabulator completition
+- support gapless playback (minimize delay between playing songs)
