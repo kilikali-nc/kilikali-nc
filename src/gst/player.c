@@ -1,103 +1,103 @@
-    /*
-     * Copyright (C) 2024 kilikali-nc team
-     *
-     * This program is free software; you can redistribute it and/or modify
-     * it under the terms of the GNU General Public License as published by
-     * the Free Software Foundation; either version 2, or (at your option)
-     * any later version.
-     *
-     * This program is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     * GNU General Public License for more details.
-     * 
-     * You should have received a copy of the GNU General Public License
-     * along with this program; if not, write to the Free Software
-     * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
-     * USA.
-     */
+/*
+ * Copyright (C) 2024 kilikali-nc team
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+ * USA.
+ */
 
-    #include <gst/audio/gstaudiodecoder.h>
-    #include <stdint.h>
+#include <gst/audio/gstaudiodecoder.h>
+#include <stdint.h>
 
-    #include "player.h"
-    #include "common.h"
-    #include "typefind-hack.h"
+#include "player.h"
+#include "common.h"
+#include "typefind-hack.h"
 
-    #include "../config.h"
-    #include "../sid.h"
+#include "../config.h"
+#include "../sid.h"
 
-    static PlayerState _state_change (GstState state);
-    static void _on_element_added (GstBin *p0, GstBin *p1, GstElement *e, gpointer data);
-    static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data);
+static PlayerState _state_change (GstState state);
+static void _on_element_added (GstBin *p0, GstBin *p1, GstElement *e, gpointer data);
+static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data);
 
-    static GstElement *_playbin = NULL;
-    static GstElement *_output = NULL;
-    static GstBus *_bus = NULL;
-    static PlayerState _state = PLAYER_STATE_NULL;
-    static Song *_song = NULL;
-    static gint _sid_tune_index = 0;
-    static GstElement *_siddec = NULL;
-    static guint8 _volume = 100;
+static GstElement *_playbin = NULL;
+static GstElement *_output = NULL;
+static GstBus *_bus = NULL;
+static PlayerState _state = PLAYER_STATE_NULL;
+static Song *_song = NULL;
+static gint _sid_tune_index = 0;
+static GstElement *_siddec = NULL;
+static guint8 _volume = 100;
 
-    static PlayerStatusUpdateFunc _status_update_func = NULL;
+static PlayerStatusUpdateFunc _status_update_func = NULL;
 
-    /* #define DEBUG_GST_PLAYER 1*/
+/* #define DEBUG_GST_PLAYER 1*/
 
-    void player_preinit (int *argc, char **argv[])
-    {
-        gst_init (argc, argv);
-        gst_typefind_hack_init ();
+void player_preinit (int *argc, char **argv[])
+{
+    gst_init (argc, argv);
+    gst_typefind_hack_init ();
+}
+
+gboolean player_init (PlayerStatusUpdateFunc status_update_func)
+{
+    gint flags = 0;
+    _state = PLAYER_STATE_NULL;
+    _status_update_func = status_update_func;
+    if (_status_update_func == NULL) goto error;
+
+    _playbin = gst_element_factory_make ("playbin", "playbin");
+    if (_playbin == NULL) {
+        goto error;
     }
-
-    gboolean player_init (PlayerStatusUpdateFunc status_update_func)
-    {
-        gint flags = 0;
-        _state = PLAYER_STATE_NULL;
-        _status_update_func = status_update_func;
-        if (_status_update_func == NULL) goto error;
-
-        _playbin = gst_element_factory_make ("playbin", "playbin");
-        if (_playbin == NULL) {
-            goto error;
-        }
-        if (strncmp (config.output, "alsa", 4) == 0) {
-            _output = gst_element_factory_make ("alsasink", "alsasink");
-            if (_output != NULL) {
-                if (config.alsa_device != NULL) {
-                    g_object_set (_output, "device", config.alsa_device, NULL);
-                }
-                g_object_set (_playbin, "audio-sink", _output, NULL);
+    if (strncmp (config.output, "alsa", 4) == 0) {
+        _output = gst_element_factory_make ("alsasink", "alsasink");
+        if (_output != NULL) {
+            if (config.alsa_device != NULL) {
+                g_object_set (_output, "device", config.alsa_device, NULL);
             }
-        } else if (strncmp (config.output, "pulse", 5) == 0) {
-            _output = gst_element_factory_make ("pulsesink", "pulsesink"); 
             g_object_set (_playbin, "audio-sink", _output, NULL);
         }
-
-        g_object_get (_playbin, "flags", &flags, NULL);
-        flags |= GST_PLAYBIN_FLAGS_AUDIO;
-        flags &= ~GST_PLAYBIN_FLAGS_VIDEO;
-        flags &= ~GST_PLAYBIN_FLAGS_SUBS;
-        g_object_set (_playbin, "flags", flags, NULL);
-
-        _bus = gst_element_get_bus (_playbin);
-        gst_bus_add_watch (_bus, _message_handler, NULL);
-
-        g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
-        _volume = player_volume ();
-        return TRUE;
-    error:
-        player_free ();
-        return FALSE;
+    } else if (strncmp (config.output, "pulse", 5) == 0) {
+        _output = gst_element_factory_make ("pulsesink", "pulsesink"); 
+        g_object_set (_playbin, "audio-sink", _output, NULL);
     }
 
-    void player_free (void)
-    {
-        if (_bus != NULL) gst_object_unref (_bus);
-        if (_playbin != NULL) {
-            gst_element_set_state (_playbin, GST_STATE_NULL);
-            gst_object_unref (_playbin);
-        }
+    g_object_get (_playbin, "flags", &flags, NULL);
+    flags |= GST_PLAYBIN_FLAGS_AUDIO;
+    flags &= ~GST_PLAYBIN_FLAGS_VIDEO;
+    flags &= ~GST_PLAYBIN_FLAGS_SUBS;
+    g_object_set (_playbin, "flags", flags, NULL);
+
+    _bus = gst_element_get_bus (_playbin);
+    gst_bus_add_watch (_bus, _message_handler, NULL);
+
+    g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
+    _volume = player_volume ();
+    return TRUE;
+error:
+    player_free ();
+    return FALSE;
+}
+
+void player_free (void)
+{
+    if (_bus != NULL) gst_object_unref (_bus);
+    if (_playbin != NULL) {
+        gst_element_set_state (_playbin, GST_STATE_NULL);
+        gst_object_unref (_playbin);
+    }
     _status_update_func = NULL;
 }
 
