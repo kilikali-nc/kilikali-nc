@@ -29,7 +29,6 @@
 
 static PlayerState _state_change (GstState state);
 static void _on_element_added (GstBin *p0, GstBin *p1, GstElement *e, gpointer data);
-static void _on_element_setup (GstElement *e, GstElement *e1, gpointer data);
 static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data);
 static void _on_about_to_finish (GstElement *e, gpointer data);
 
@@ -41,6 +40,7 @@ static Song *_song = NULL;
 static gint _sid_tune_index = 0;
 static GstElement *_siddec = NULL;
 static guint8 _volume = 100;
+static gboolean _use_playbin3 = FALSE;
 
 static PlayerStatusUpdateFunc _status_update_func = NULL;
 
@@ -61,13 +61,14 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
 
     _playbin = gst_element_factory_make ("playbin3", "playbin");
     if (_playbin == NULL) {
+        _use_playbin3 = FALSE;
         _playbin = gst_element_factory_make ("playbin", "playbin");
         if (_playbin == NULL) {
             goto error;
         }
     } else {
+        _use_playbin3 = TRUE;
         g_object_set (_playbin, "instant-uri", TRUE, NULL);
-        g_signal_connect (GST_BIN (_playbin), "element-setup", G_CALLBACK (_on_element_setup), NULL);
     }
     g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
 
@@ -116,9 +117,11 @@ gint player_set_song (Song *s)
     if (s->uri == NULL) return 2;
     if (_playbin == NULL) return 3; 
 
-    g_signal_handlers_disconnect_by_func (_playbin, G_CALLBACK (_on_about_to_finish), NULL);
-    if (s->type != SONG_TYPE_SID && s->type != SONG_TYPE_MOD) {
-        g_signal_connect (GST_BIN (_playbin), "about-to-finish", G_CALLBACK (_on_about_to_finish), NULL);
+    if (_use_playbin3 == TRUE) {
+        g_signal_handlers_disconnect_by_func (_playbin, G_CALLBACK (_on_about_to_finish), NULL);
+        if (s->type != SONG_TYPE_SID && s->type != SONG_TYPE_MOD) {
+            g_signal_connect (GST_BIN (_playbin), "about-to-finish", G_CALLBACK (_on_about_to_finish), NULL);
+        }
     }
     _song = s;
     g_object_set (_playbin, "uri", _song->uri, NULL);
@@ -337,11 +340,6 @@ static gboolean _message_handler (GstBus *b, GstMessage *m, gpointer data)
          _status_update_func (msg, d);
     }
     return TRUE;
-}
-
-static void _on_element_setup (GstElement *e, GstElement *e1, gpointer data)
-{
-    _on_element_added (NULL, NULL, e, data);
 }
 
 static void _on_about_to_finish (GstElement *e, gpointer data)
