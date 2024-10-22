@@ -40,7 +40,7 @@ static Song *_song = NULL;
 static gint _sid_tune_index = 0;
 static GstElement *_siddec = NULL;
 static guint8 _volume = 100;
-static gboolean _use_playbin3 = FALSE;
+static gboolean _use_gapless_playback = FALSE;
 
 static PlayerStatusUpdateFunc _status_update_func = NULL;
 
@@ -59,16 +59,25 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
     _status_update_func = status_update_func;
     if (_status_update_func == NULL) goto error;
 
+    _use_gapless_playback = FALSE;
     _playbin = gst_element_factory_make ("playbin3", "playbin");
+    if (_playbin != NULL) {
+        GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (_playbin), "instant-uri");
+        g_debug ("JVJV: spec %p\n", spec);
+        if (spec == NULL) {
+            gst_object_unref (_playbin);
+            _playbin = NULL;
+        } else {
+            _use_gapless_playback = TRUE;
+            g_object_set (_playbin, "instant-uri", TRUE, NULL);
+        }
+    }
     if (_playbin == NULL) {
-        _use_playbin3 = FALSE;
+        /* use playbin2 */
         _playbin = gst_element_factory_make ("playbin", "playbin");
         if (_playbin == NULL) {
             goto error;
         }
-    } else {
-        _use_playbin3 = TRUE;
-        g_object_set (_playbin, "instant-uri", TRUE, NULL);
     }
     g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
 
@@ -117,7 +126,7 @@ gint player_set_song (Song *s)
     if (s->uri == NULL) return 2;
     if (_playbin == NULL) return 3; 
 
-    if (_use_playbin3 == TRUE) {
+    if (_use_gapless_playback == TRUE) {
         g_signal_handlers_disconnect_by_func (_playbin, G_CALLBACK (_on_about_to_finish), NULL);
         if (s->type != SONG_TYPE_SID && s->type != SONG_TYPE_MOD) {
             g_signal_connect (GST_BIN (_playbin), "about-to-finish", G_CALLBACK (_on_about_to_finish), NULL);
