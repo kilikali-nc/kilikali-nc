@@ -63,7 +63,6 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
     _playbin = gst_element_factory_make ("playbin3", "playbin");
     if (_playbin != NULL) {
         GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (_playbin), "instant-uri");
-        g_debug ("JVJV: spec %p\n", spec);
         if (spec == NULL) {
             gst_object_unref (_playbin);
             _playbin = NULL;
