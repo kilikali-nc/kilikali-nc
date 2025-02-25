@@ -27,12 +27,7 @@ static GThread *_thread = NULL;
 
 void net_free (void)
 {
-    NetLyricsThreadData *data = NULL;
-    if (_thread != NULL) {
-        data = (NetLyricsThreadData *)g_thread_join (_thread);
-        net_lyrics_free_data (data);
-        _thread = NULL;
-    }
+    net_join_lyrics_thread ();
 }
 
 gchar *net_get (const gchar *url)
@@ -61,7 +56,7 @@ gchar *net_get (const gchar *url)
 }
 
 
-gint net_lyrics_get (const gchar *artist, const gchar *title, NetLyricsService service, GSourceFunc cb)
+gint net_get_lyrics (const gchar *artist, const gchar *title, NetLyricsService service, GSourceFunc cb)
 {
     NetLyricsThreadData *data = NULL;
     gint ret = 0;
@@ -70,11 +65,7 @@ gint net_lyrics_get (const gchar *artist, const gchar *title, NetLyricsService s
     }
 
     /* Only one thread at the time */
-    if (_thread != NULL) {
-        data = (NetLyricsThreadData *)g_thread_join (_thread);
-        net_lyrics_free_data (data);
-        _thread = NULL;
-    }
+    net_join_lyrics_thread ();
 
     switch (service) {
         case NET_LYRICS_SERVICE_CHARTLYRICS:
@@ -103,3 +94,11 @@ lyrics_error:
     return 100;
 }
 
+void net_join_lyrics_thread (void)
+{
+    if (_thread != NULL) {
+        NetLyricsThreadData *data = (NetLyricsThreadData *)g_thread_join (_thread);
+        if (data != NULL) net_lyrics_free_data (data);
+        _thread = NULL;
+    }
+}
