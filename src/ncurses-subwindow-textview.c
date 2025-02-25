@@ -45,6 +45,8 @@ gboolean ncurses_subwindow_textview_resize (NCursesSubwindowTextview *t, gint wi
     t->height = height;
     t->total_lines = _calculate_total_lines(t);
     t->last_line = t->total_lines - t->height;
+    if (t->last_line < 1) t->last_line = t->total_lines - 1;
+    if (t->last_line < 1) t->last_line = 0;
 
     ncurses_scroller_page_max_index (&t->scroller, t->total_lines - 1);
     ncurses_scroller_resize (&t->scroller, t->height);
@@ -64,6 +66,7 @@ void ncurses_subwindow_textview_delete (NCursesSubwindowTextview *t)
 {
     if (t->free_text == TRUE) {
         g_free (t->text);
+        t->text = NULL;
     }
     if (t->win != NULL) delwin (t->win);
     t->win = NULL;
@@ -84,7 +87,7 @@ void ncurses_subwindow_textview_update (NCursesSubwindowTextview *t)
     else if (t->total_lines < 1) return;
     else if (t->height == 0) return;
 
-    gint line = t->scroller.page_start_index + 1;
+    gint line = t->scroller.page_start_index;
     if (line > t->last_line) line = t->last_line;
     _find_new_position_to_line (t, line);
     t->current_line = line;
@@ -165,6 +168,9 @@ gboolean _get_running_line (NCursesSubwindowTextview *t, char *text, gint *len)
     if (c == end) return FALSE;
     *len = 0;
     for (; c != end && w < t->width; c++) {
+        if (*c == '\0') {
+            break;
+        }
         if (*c == '\n') {
             c++;
             break;
@@ -174,7 +180,6 @@ gboolean _get_running_line (NCursesSubwindowTextview *t, char *text, gint *len)
     t->running = c;
     *len = w;
     text[w] = '\0';
-    if (c == end) return FALSE;
     return TRUE;
 }
 
@@ -261,11 +266,13 @@ gboolean ncurses_subwindow_textview_text (NCursesSubwindowTextview *t, const gch
     }
 
     ncurses_scroller_init (&t->scroller, 0, 0);
-    t->current = t->text;
-    t->running = t->current;
+    t->running = t->current = t->text;
     t->total_lines = _calculate_total_lines(t);
     t->last_line = t->total_lines - t->height;
+    if (t->last_line < 1) t->last_line = t->total_lines - 1;
+    if (t->last_line < 1) t->last_line = 0;
     ncurses_scroller_page_max_index (&t->scroller, t->total_lines - 1);
+    ncurses_scroller_scroll_top (&t->scroller);
 
     return TRUE;
 set_text_error:
