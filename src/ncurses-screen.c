@@ -463,10 +463,18 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
             if (config.lyrics_service != 0) {
                 _mode = NCURSES_SCREEN_MODE_LYRICS;
                 if (_current_song != NULL || player_state () == PLAYER_STATE_PLAYING) {
-                    ncurses_window_lyrics_fetch (_current_song->artist, _current_song->title, (NetLyricsService)config.lyrics_service );
+                    if (ncurses_window_lyrics_fetch (_current_song->artist,
+                        _current_song->title,
+                        (NetLyricsService)config.lyrics_service ) == FALSE) {
+                        _mode = NCURSES_SCREEN_MODE_PLAYLIST;
+                    }
                 } else {
                     Song *ol = playlist_get_nth_song_no_set (selection_end_index);
-                    ncurses_window_lyrics_fetch (ol->artist, ol->title, (NetLyricsService)config.lyrics_service );
+                    if (ncurses_window_lyrics_fetch (ol->artist,
+                        ol->title,
+                        (NetLyricsService)config.lyrics_service ) == FALSE) {
+                        _mode = NCURSES_SCREEN_MODE_PLAYLIST;
+                    }
                 }
             }
         }
@@ -671,7 +679,7 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
             ncurses_window_help_up_full_page ();
         }
     } else if (_mode == NCURSES_SCREEN_MODE_LYRICS) {
-        if (_check_key (&config.key_common_abort, keybind_name)) {
+        if (_check_key (&config.key_common_abort, keybind_name) || _check_key (&config.key_quit, keybind_name)) {
             _mode = NCURSES_SCREEN_MODE_PLAYLIST;
             ncurses_window_playlist_mode_set (NCURSES_WINDOW_PLAYLIST_MODE_NORMAL);
             g_idle_add (_screen_update_idle, NULL);
@@ -896,7 +904,8 @@ static void _play (void)
 
     if (config.lyrics_service != 0) {
         if (_current_song != NULL) {
-            ncurses_window_lyrics_fetch (_current_song->artist, _current_song->title, (NetLyricsService)config.lyrics_service );
+            gboolean lyrics_ret = ncurses_window_lyrics_fetch (_current_song->artist, _current_song->title, (NetLyricsService)config.lyrics_service );
+            (void)lyrics_ret;
         }
     }
 }

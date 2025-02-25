@@ -26,6 +26,7 @@ typedef struct {
     GSourceFunc cb;
     gchar *artist;
     gchar *title;
+    gint error;
 } NetLyricsThreadData;
 
 void net_lyrics_free_data (NetLyricsThreadData *data);

@@ -86,30 +86,30 @@ gpointer net_lyrics_chartlyrics_thread (gpointer user_data)
     gboolean found = FALSE;
     if (user_data == NULL) return user_data;
     NetLyricsThreadData *data = (NetLyricsThreadData *)user_data;
+    data->error = 0;
 
     /* and-search */
     result = _get_chartlyrics ("http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=%s&song=%s", data->artist, data->title, TRUE);
     if (result != NULL && *result != '\0' ) {
         /* if and-search does not work result is some weird string */
         gchar *str = result;
-        gboolean found = FALSE;
         do {
             if (!strncmp(str, "<Lyric>", 7)) {
                 found = TRUE;
                 break;
             }
         } while (*str != '\0' && ((str = g_utf8_find_next_char (str, NULL)) != NULL));
-        if (found == FALSE) {
-            g_free (result);
-            /* or-search */
-            result = _get_chartlyrics ("http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=%s&song=%s", data->artist, data->title, FALSE);
-        }
     } else if (result == NULL || *result == '\0' ) {
+        found = FALSE;
+    }
+
+    if (found == FALSE) {
         g_free (result);
         /* or-search */
         result = _get_chartlyrics ("http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=%s&song=%s", data->artist, data->title, FALSE);
     }
     if (result == NULL || *result == '\0' ) {
+        data->error = 1;
         goto _thread_chartlyrics_error;
     }
 
@@ -138,9 +138,9 @@ gpointer net_lyrics_chartlyrics_thread (gpointer user_data)
         }
     }
 
-    g_idle_add (data->cb, (gpointer)g_strdup(lyrics));
-
 _thread_chartlyrics_error:
+    if (lyrics != NULL) g_idle_add (data->cb, (gpointer)g_strdup(lyrics));
+    else g_idle_add (data->cb, (gpointer)NULL);
     g_free (result);
     return user_data;
 }

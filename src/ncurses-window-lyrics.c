@@ -127,27 +127,25 @@ void ncurses_window_lyrics_up_full_page (void)
     ncurses_subwindow_textview_up_full_page (&_textview);
 }
 
-void ncurses_window_lyrics_fetch (const gchar *artist, const gchar *title, NetLyricsService service)
+gboolean ncurses_window_lyrics_fetch (const gchar *artist, const gchar *title, NetLyricsService service)
 {
-    if (service < NET_LYRICS_SERVICE_FIRST || service >= NET_LYRICS_SERVICE_END) return;
+    if (service < NET_LYRICS_SERVICE_FIRST || service >= NET_LYRICS_SERVICE_END) return FALSE;
     (void)ncurses_window_lyrics_init (_update); /* reset to defaults */
     if (artist == NULL || title == NULL) {
-        g_snprintf (_title, ABSOLUTELY_MAX_LINE_LEN, _("Unknown artist - Unknown title%-*s"), _width-30, " ");
-        ncurses_subwindow_textview_text (&_textview, _("Lyrics not found."), TRUE, TRUE);
-        g_idle_add (_update, NULL);
-        return;
+        /* TODO: error message? */
+        return FALSE;
     }
     g_snprintf (_title, ABSOLUTELY_MAX_LINE_LEN, "%s - %-*s", artist, _width-6-(int)g_utf8_strlen (artist, 0)-(int)g_utf8_strlen (title, 0), title);
-    //fprintf (stderr, "LLLLLLL artist: %s, title: %s\n", artist, title);
-    gint ret = net_lyrics_get (artist, title, service, _got_lyrics);
-    /* FIXME */
-    (void)ret;
+    if (net_get_lyrics (artist, title, service, _got_lyrics) != 0) {
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static gboolean _got_lyrics (gpointer data)
 {
     gchar *lyrics = (gchar *)data;
-    //fprintf (stderr, "LLLLLLLL: %s\n", lyrics);
+
     if (lyrics != NULL && *lyrics == '\0') {
         g_free (lyrics);
         lyrics = NULL;
@@ -159,6 +157,9 @@ static gboolean _got_lyrics (gpointer data)
     ncurses_subwindow_textview_text (&_textview, lyrics, FALSE, TRUE);
 
     g_idle_add (_update, NULL);
+
+    net_join_lyrics_thread ();
+
     return FALSE;
 }
 

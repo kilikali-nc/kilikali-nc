@@ -36,6 +36,6 @@ void ncurses_window_lyrics_up_half_page (void);
 void ncurses_window_lyrics_down_full_page (void);
 void ncurses_window_lyrics_up_full_page (void);
 
-void ncurses_window_lyrics_fetch (const gchar *artist, const gchar *song, NetLyricsService service);
+gboolean ncurses_window_lyrics_fetch (const gchar *artist, const gchar *song, NetLyricsService service);
 
 #endif

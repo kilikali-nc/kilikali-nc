@@ -33,6 +33,7 @@ void net_free (void);
 
 gchar *net_get (const gchar *url);
 
-gint net_lyrics_get (const gchar *artist, const gchar *title, NetLyricsService service, GSourceFunc cb);
+gint net_get_lyrics (const gchar *artist, const gchar *title, NetLyricsService service, GSourceFunc cb);
+void net_join_lyrics_thread (void);
 
 #endif
