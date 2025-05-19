@@ -29,6 +29,9 @@ Before release
 - search/cmdline history: sometimes (null) appears appears to end of line
 - translations: needs string check and proper translations
 - translations: check that works properly
+- Speed up adding playlist items by reading metadata on a separate thread. The
+  item's filename can appear on the playlist temporarily until metadata is read
+  to form the correct track name.
 
 Future
 ------
