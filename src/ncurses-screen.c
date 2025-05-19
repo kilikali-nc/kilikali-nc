@@ -109,6 +109,7 @@ static void _playlist_paste_before (gint selection_start_index, gint selection_e
 static void _execute_cmdline (void);
 
 static gboolean _check_key (Keybind *keybind, const char *keybind_name);
+static void _open_help ();
 
 #define MAX_CMDLINE_LEN 512
 static char _tmp[ABSOLUTELY_MAX_LINE_LEN] = "--";
@@ -119,6 +120,7 @@ static gint _current_index; /* actual playing song index */
 static gint _playlist_len = 0;
 
 static NCursesScreenMode _mode;
+static NCursesScreenMode _mode_before_help = NCURSES_SCREEN_MODE_PLAYLIST;
 
 /* ncurses */
 static int _width;
@@ -458,7 +460,7 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
                 }
             }
         } else if (_check_key (&config.key_help, keybind_name)) {
-            _mode = NCURSES_SCREEN_MODE_HELP;
+            _open_help ();
         } else if (_check_key (&config.key_open_lyrics, keybind_name)) {
             if (config.lyrics_service != 0) {
                 _mode = NCURSES_SCREEN_MODE_LYRICS;
@@ -661,8 +663,14 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
         }
         }
     } else if (_mode == NCURSES_SCREEN_MODE_HELP) {
-        if (_check_key (&config.key_common_abort, keybind_name) || _check_key (&config.key_quit, keybind_name)) {
-            _mode = NCURSES_SCREEN_MODE_PLAYLIST;
+        if (_check_key (&config.key_common_abort, keybind_name) ||
+            _check_key (&config.key_quit, keybind_name)) {
+            NCursesScreenMode next_mode = _mode_before_help;
+            if (next_mode == NCURSES_SCREEN_MODE_HELP)
+            {
+                next_mode = NCURSES_SCREEN_MODE_PLAYLIST;
+            }
+            _mode = next_mode;
             ncurses_window_playlist_mode_set (NCURSES_WINDOW_PLAYLIST_MODE_NORMAL);
             g_idle_add (_screen_update_idle, NULL);
         } else if (_check_key (&config.key_move_up, keybind_name)) {
@@ -679,7 +687,8 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
             ncurses_window_help_up_full_page ();
         }
     } else if (_mode == NCURSES_SCREEN_MODE_LYRICS) {
-        if (_check_key (&config.key_common_abort, keybind_name) || _check_key (&config.key_quit, keybind_name)) {
+        if (_check_key (&config.key_common_abort, keybind_name) ||
+            _check_key (&config.key_quit, keybind_name)) {
             _mode = NCURSES_SCREEN_MODE_PLAYLIST;
             ncurses_window_playlist_mode_set (NCURSES_WINDOW_PLAYLIST_MODE_NORMAL);
             g_idle_add (_screen_update_idle, NULL);
@@ -1386,7 +1395,7 @@ static int _help_callback (int argc, char **argv)
         return -1;
     }
     _command_changed_mode = TRUE;
-    _mode = NCURSES_SCREEN_MODE_HELP;
+    _open_help ();
     return 0;
 }
 
@@ -1557,4 +1566,10 @@ static gboolean _check_key (Keybind *keybind, const char *keybind_name)
         }
     }
     return FALSE;
+}
+
+static void _open_help ()
+{
+    _mode_before_help = _mode;
+    _mode = NCURSES_SCREEN_MODE_HELP;
 }
