@@ -661,7 +661,7 @@ static void _event_ch (int ch, const char *keybind_name, uint32_t num_keybind_re
         }
         }
     } else if (_mode == NCURSES_SCREEN_MODE_HELP) {
-        if (_check_key (&config.key_common_abort, keybind_name)) {
+        if (_check_key (&config.key_common_abort, keybind_name) || _check_key (&config.key_quit, keybind_name)) {
             _mode = NCURSES_SCREEN_MODE_PLAYLIST;
             ncurses_window_playlist_mode_set (NCURSES_WINDOW_PLAYLIST_MODE_NORMAL);
             g_idle_add (_screen_update_idle, NULL);
