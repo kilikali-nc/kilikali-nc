@@ -1528,9 +1528,16 @@ static int _volume_callback (int argc, char **argv)
         ncurses_window_error_set (_("Error: Volume. Wrong number of arguments."));
         return -1;
     }
+    for (const gchar *c = argv[1]; *c; c = g_utf8_find_next_char (c, NULL)) {
+        gunichar uc = g_utf8_get_char(c);
+        if (!g_unichar_isdigit(uc)) {
+            ncurses_window_error_set (_("Error: Volume requested is not a number."));
+            return -1;
+        }
+    }
     gint64 volume = g_ascii_strtoll (argv[1], NULL, 10);
     if (volume > PLAYER_VOLUME_MAX || volume < PLAYER_VOLUME_MIN) {
-        ncurses_window_error_set (_("Error: Volume. Out of range."));
+        ncurses_window_error_set (_("Error: Volume. Outside of range 0-100."));
         return -1;
     }
     (void)player_set_volume ((guint)volume);
