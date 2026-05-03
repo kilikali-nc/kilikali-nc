@@ -52,7 +52,7 @@ static ConfigOption _options[] = {
         .value.string = &config.output,
         .default_value.string = "default",
         .have = 0,
-        .comment = "output. Options: default, alsa or pulse"
+        .comment = "output. Options: default, pipewire, alsa or pulse"
     },
     {
         .name = "alsa_device",
