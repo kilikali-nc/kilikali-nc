@@ -80,17 +80,35 @@ gboolean player_init (PlayerStatusUpdateFunc status_update_func)
     }
     g_signal_connect (GST_BIN (_playbin), "deep-element-added", G_CALLBACK (_on_element_added), NULL);
 
+    _output = NULL; /* _output not needed to free at any point */
     if (strncmp (config.output, "alsa", 4) == 0) {
         _output = gst_element_factory_make ("alsasink", "alsasink");
         if (_output != NULL) {
             if (config.alsa_device != NULL) {
                 g_object_set (_output, "device", config.alsa_device, NULL);
             }
-            g_object_set (_playbin, "audio-sink", _output, NULL);
         }
     } else if (strncmp (config.output, "pulse", 5) == 0) {
         _output = gst_element_factory_make ("pulsesink", "pulsesink"); 
+    } else if (strncmp (config.output, "pipewire", 8) == 0) {
+        _output = gst_element_factory_make ("pipewiresink", "pipewiresink"); 
+    }
+
+    if (_output != NULL) {
         g_object_set (_playbin, "audio-sink", _output, NULL);
+    }
+
+    _output = NULL;
+    g_object_get (_playbin, "audio-sink", &_output, NULL);
+    if (_output != NULL) {
+        gchar *name = NULL;
+        g_object_get (_output, "name", &name, NULL);
+        if (name != NULL) {
+            if ((strncmp (name, "pipewiresink", 12) == 0) || (strncmp (name, "pulsesink", 9) == 0)) {
+                g_object_set (_output, "client-name", APP_EXE, NULL);
+            }
+	    g_free (name);
+        }
     }
 
     g_object_get (_playbin, "flags", &flags, NULL);
