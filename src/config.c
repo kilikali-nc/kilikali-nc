@@ -657,8 +657,10 @@ static const char *_find_next_non_whitespace_on_line (const char *s)
 static int _process_line (const char *line,
     int (*callback) (void *callback_data,
         const char *opt, int opt_len,
-        const char *val, int val_len),
-    void *callback_data)
+        const char *val, int val_len,
+        gboolean is_set),
+    void *callback_data,
+    gboolean is_set)
 {
     //int have_opt = 0;
     int opt_len = 0;
@@ -717,14 +719,14 @@ static int _process_line (const char *line,
             c = prev;
         }
     }
-    if (callback (callback_data, opt, opt_len, val, val_len) != 0) {
+    if (callback (callback_data, opt, opt_len, val, val_len, is_set) != 0) {
         return -1;
     }
     return 0;
 }
 
 static int _parse_string_with_options_callback (void *callback_data,
-    const char *opt, int opt_len, const char *val, int val_len) {
+    const char *opt, int opt_len, const char *val, int val_len, gboolean is_set) {
     ParseStringWithOptionsContext *context = callback_data;
     g_string_set_size (context->value, 0);
     ConfigOption *opts = context->opts;
@@ -732,10 +734,12 @@ static int _parse_string_with_options_callback (void *callback_data,
     int found_option = 0;
     for (int i = 0; i < num_opts; ++i) {
         if (strncmp (opts[i].name, opt, opt_len) == 0) {
-            if (opts[i].have) {
-                LOG_ERROR ("Unique config option '%s' defined more than once.",
-                    opts[i].name);
-                return -1;
+            if (is_set == false) {
+                if (opts[i].have) {
+                    LOG_ERROR ("Unique config option '%s' defined more than once.",
+                        opts[i].name);
+                    return -1;
+                }
             }
             switch (opts[i].type) {
             case CONFIG_OPTION_TYPE_INTEGER: {
@@ -763,6 +767,9 @@ static int _parse_string_with_options_callback (void *callback_data,
                 break;
             }
             case CONFIG_OPTION_TYPE_STRING: {
+                if (is_set == true && *opts[i].value.string != NULL) {
+                    free (*opts[i].value.string);
+                }
                 *opts[i].value.string = malloc (val_len + 1);
                 if (!*opts[i].value.string) {
                     LOG_ERROR ("Failed to allocate memory for the value of option '%s'.", opts[i].name);
@@ -846,14 +853,16 @@ static int _parse_string_with_options_callback (void *callback_data,
 int config_parse_string (const char *str,
     int (*callback) (void *callback_data,
         const char *opt, int opt_len,
-        const char *val, int val_len),
-    void *callback_data)
+        const char *val, int val_len,
+        gboolean is_set),
+    void *callback_data,
+    gboolean is_set)
 {
     const char *c = str;
     const char *line = str;
     for (;; c = g_utf8_find_next_char (c, NULL)) {
         if (*c == '\n' || !*c) {
-            if (_process_line (line, callback, callback_data)) {
+            if (_process_line (line, callback, callback_data, is_set)) {
                 return -1;
             }
             if (!*c) {
@@ -866,14 +875,14 @@ int config_parse_string (const char *str,
 }
 
 int config_parse_string_with_options (const char *str,
-    ConfigOption *opts, int num_opts) {
+    ConfigOption *opts, int num_opts, gboolean is_set) {
     ParseStringWithOptionsContext context = {
         .opts = opts,
         .num_opts = num_opts,
         .value = g_string_new_len (0, 64)
     };
     int ret = config_parse_string ( str, _parse_string_with_options_callback,
-        &context);
+        &context, is_set);
     g_string_free (context.value, TRUE);
     if (ret != 0) {
         goto out;
@@ -964,10 +973,22 @@ int config_init (void)
     char *str = NULL;
     int ret = util_file_load_to_str (config_file_path, &str);
     if (ret == 0) {
-        if (config_parse_string_with_options (str, _options, _NUM_OPTIONS)) {
+        if (config_parse_string_with_options (str, _options, _NUM_OPTIONS, false)) {
             ret = 1;
         }
-	g_free (str);
+        g_free (str);
+    }
+    return ret;
+}
+
+int config_set_single_option (const char *str)
+{
+    int ret = -1;
+    if (str != NULL) {
+        if (config_parse_string_with_options (str, _options, _NUM_OPTIONS, true)) {
+            ret = 1;
+        }
+        ret = 0;
     }
     return ret;
 }

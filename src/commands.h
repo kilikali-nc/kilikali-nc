@@ -133,4 +133,13 @@ static Command volume_command = {
     .callback = _volume_callback
 };
 
+static Command set_command = {
+    .name = "set",
+    .description = "Set config. Format: variable=value",
+    .hint = COMMAND_HINT_NONE,
+    .modes = CMDLINE_MODE_CMD,
+    .callback = _set_callback
+};
+
+
 #endif

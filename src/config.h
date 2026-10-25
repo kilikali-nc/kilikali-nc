@@ -163,11 +163,14 @@ extern Config config;
 int config_parse_string (const char *str,
     int (*callback) (void *callback_data,
         const char *opt, int opt_len,
-        const char *val, int val_len),
-    void *callback_data);
+        const char *val, int val_len,
+        gboolean is_set),
+    void *callback_data,
+    gboolean is_set);
 
 int config_parse_string_with_options (const char *str,
-    ConfigOption *config_options, int num_options);
+    ConfigOption *config_options, int num_options, gboolean is_set);
+int config_set_single_option (const char *str);
 
 void config_destroy_parsed_options (ConfigOption *opts, int num_opts);
 

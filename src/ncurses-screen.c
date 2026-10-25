@@ -69,6 +69,7 @@ static int _help_callback (int argc, char **argv);
 static int _print_working_directory_callback (int argc, char **argv);
 static int _seek_callback (int argc, char **argv);
 static int _volume_callback (int argc, char **argv);
+static int _set_callback (int argc, char **argv);
 #include "commands.h"
 
 typedef enum {
@@ -1111,6 +1112,9 @@ static gboolean _init_callbacks (void)
    if (command_register(&volume_command)) {
        return FALSE;
    }
+   if (command_register(&set_command)) {
+       return FALSE;
+   }
    return TRUE;
 }
 
@@ -1541,6 +1545,44 @@ static int _volume_callback (int argc, char **argv)
         return -1;
     }
     (void)player_set_volume ((guint)volume);
+    return 0;
+}
+
+static int _set_callback (int argc, char **argv)
+{
+    /* FIXME: add save and possibly help */
+    /* FIXME: possibly spaces between variable, = and value */
+
+    gboolean has_equal = false;
+    if (argc != 2) {
+        ncurses_window_error_set (_("Error: Set. Wrong number of arguments."));
+        return -1;
+    }
+    for (const gchar *c = argv[1]; *c; c = g_utf8_find_next_char (c, NULL)) {
+        if (*c == '=') {
+            has_equal = true;
+            break;
+        }
+    }
+
+    if (false == has_equal) {
+        ncurses_window_error_set (_("Error: Set. Invalid syntax"));
+        return -1;
+    }
+
+    /* Now actual set */
+    if (config_set_single_option (argv[1]) != 0) {
+        ncurses_window_error_set (_("Error: Set. invalid variable or value."));
+        return -1;
+    }
+
+    /* do mandatory set things here and do not care errors */
+
+    /* is change dir one of the things when music_directory_is_changed? */
+    const char *dir = config.default_music_directory;
+    (void)ncurses_window_filebrowser_change_directory (dir);
+    (void)util_chdir (dir);
+
     return 0;
 }
 
